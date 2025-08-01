@@ -20,9 +20,11 @@ $query  = "SELECT A.ipuid 'id',A.ipunotransaksi 'nomor',DATE_FORMAT(A.iputanggal
                           END 'status', IFNULL(A.ipujumlahdp,0) 'totaldp', IFNULL(A.iputotalpph22,0) 'totalpph22', 
                           IFNULL(A.iputotalpajak,0) 'totalppn',
                           '-' 'posting', ROUND((IFNULL(A.iputotaltransaksi,0)-IFNULL(A.ipujumlahdp,0)),2) 'totaltagihan',
-                          A.ipunofakturpajak 'fakturpajak'
+                          A.ipunofakturpajak 'fakturpajak', A.iputransaksi 'tansaksiid'
                      FROM einvoicepenjualanu A 
-                LEFT JOIN bkontak B ON A.ipukontak=B.kid 
+                LEFT JOIN bkontak B ON A.ipukontak=B.kid
+                LEFT JOIN auser C ON A.ipucreateu=C.uid
+                LEFT JOIN aunit D ON C.kodeunit=D.utid 
 	                WHERE A.ipusumber = '" . $transcode . "'  
 	                  AND A.iputanggal BETWEEN '" . tgl_database($date1) . "' 
 	                  AND '" . tgl_database($date2) . "'";
@@ -30,6 +32,11 @@ $query  = "SELECT A.ipuid 'id',A.ipunotransaksi 'nomor',DATE_FORMAT(A.iputanggal
 if ($kontak != "") {
 	$query .= " AND A.ipukontak='" . $kontak . "'";
 }
+
+$unitkode = $this->session->kodeunit;
+if($unitkode != 0){
+	$query .= " AND D.utid ='" . $unitkode . "'";
+}  
 
 $query .= " GROUP BY A.ipuid,A.ipunotransaksi,A.iputanggal";
 
@@ -68,6 +75,7 @@ if ($use_logo == 0) {
 				<th class="left px-1" width="10%">Tanggal</th>
 				<th class="left px-1" width="11%">Nomor</th>
 				<th class="left px-1">Kontak</th>
+				<th class="center px-1">Metode Bayar</th>
 				<th class="right px-1">Jumlah</th>
 				<th class="right px-1">PPN</th>
 				<th class="right px-1">Total</th>
@@ -75,16 +83,27 @@ if ($use_logo == 0) {
 		</thead>
 		<tbody>
 			<?php
-			$total = 0;
-			$totaldp = 0;
+			$total        = 0;
+			$totaldp      = 0;
 			$totaltagihan = 0;
-			$totalppn = 0;
-			$totalpph22 = 0;
+			$totalppn     = 0;
+			$totalpph22   = 0;
+			$totalTunai   = 0;
+			$totalRfid    = 0;
+
 			foreach ($datareport->data as $row) {
+				$metodeBayar = 'Tunai';
+				if($row->tansaksiid == 1 ){
+					$metodeBayar = 'RFID';
+					$totalRfid   += $row->totaltagihan;
+				}else{
+					$totalTunai   += $row->totaltagihan;
+				}
 				echo "<tr>";
 				echo "<td>" . $row->tanggal . "</td>";
 				echo "<td>" . $row->nomor . "</td>";
 				echo "<td>" . $row->kontak . "</td>";
+				echo '<td style="text-align:center;">' . $metodeBayar . "</td>";
 				echo "<td class='right px-1'>" . eFormatNumber($row->total, 2) . "</td>";
 				echo "<td class='right px-1'>" . eFormatNumber($row->totalppn, 2) . "</td>";
 				echo "<td class='right px-1'>" . eFormatNumber($row->totaltagihan, 2) . "</td>";
@@ -99,10 +118,23 @@ if ($use_logo == 0) {
 		</tbody>
 		<tfoot>
 			<tr>
-				<td colspan="3" class="px-1">Total</td>
-				<td class="right px-1"><?= eFormatNumber($total, 2); ?></td>
-				<td class="right px-1"><?= eFormatNumber($totalppn, 2); ?></td>
-				<td class="right px-1"><?= eFormatNumber($totaltagihan, 2); ?></td>
+				<td colspan="4"><br></td>
+				<td><br></td>
+				<td><br></td>
+				<td><br></td>
+			</tr>
+
+			<tr>
+				<td colspan="4" class="px-1"></td>
+				<td class="right px-1">Pembayaran Tunai</td>
+				<td class="right px-1">Pembayaran RFID</td>
+				<td class="right px-1">Transaksi POS</td>
+			</tr>
+			<tr>
+				<td colspan="4" class="px-1">Total</td>
+				<td class="right px-1"><?= eFormatNumber($totalTunai, 2); ?></td>
+				<td class="right px-1"><?= eFormatNumber($totalRfid, 2); ?></td>
+				<td class="right px-1"><?= eFormatNumber($totalTunai+$totalRfid, 2); ?></td>
 			</tr>
 		</tfoot>
 	</table>
