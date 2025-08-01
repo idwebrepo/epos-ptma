@@ -1,0 +1,153 @@
+<?php
+	include ('style.php');
+
+    $CI =& get_instance();
+
+    $query  = "SELECT A.souid 'id',A.sounotransaksi 'nomor',DATE_FORMAT(A.soutanggal,'%d-%m-%Y') 'tanggal',B.knama 'kontak',
+                      A.souuraian 'uraian', A.soutotaltransaksi 'total', B.k1alamat 'alamat',
+                      C.gnama 'gudang'                         
+                 FROM fstokopnameu A 
+            LEFT JOIN bkontak B ON A.soukontak=B.kid
+            LEFT JOIN bgudang C ON A.sougudang=C.gid 
+                WHERE A.souid = '".$id."'";
+
+    $header = $CI->M_transaksi->get_data_query($query);
+    $header = json_decode($header);	
+
+    $querydtl  = "SELECT B.ikode 'noitem',B.inama 'item',A.sodqty 'qty',C.skode 'satuan',A.sodcatatan 'catatan',
+    					 A.sodselisih 'selisih'
+                 FROM fstokopnamed A 
+            LEFT JOIN bitem B ON A.soditem = B.iid 
+            LEFT JOIN bsatuan C ON A.sodsatuan=C.sid 
+                WHERE A.sodidsou = '".$id."' ORDER BY A.sodurutan ASC";
+
+    $detil = $CI->M_transaksi->get_data_query($querydtl);
+    $detil = json_decode($detil);
+
+    foreach ($header->data as $row) {
+    	$nomor = $row->nomor;
+    	$tanggal = $row->tanggal;
+    	$kontak = $row->kontak;    	    	
+    	$alamat = $row->alamat;    	    	    	
+    	$uraian = empty($row->uraian) ? "-" : $row->uraian;    
+    	$total = $row->total;
+    	$kontak = $row->kontak;       	
+    	$gudang = $row->gudang;
+    }
+?>
+<div class="header-report">
+	<?
+	if($use_logo==1){
+	?>
+		<div class="logo left">	
+			<img src="<?php echo app_url('assets/dist/img/logo-utama.png'); ?>" width="80" height="80" />
+		</div>
+	<? } ?>
+	<div class="left px-1" width="38%">
+		<h4 class="text-blue"><b><?= $company_name; ?></b></h4>				
+		<span><?= $company_addr ?>, Kode Pos : <?= $company_kodepos ?>, Email : <?= $company_email ?>, Telp : <?= $company_phone ?></span>		
+	</div>
+	<div class="right">
+		<h3><?= $title; ?></h3>		
+		<div class="right py-2">
+			<table class="table">
+				<tbody>
+					<tr>
+						<td align="center" class="border-1 bg-dark">Nomor</td>
+						<td width="10"></td>
+						<td align="center" class="border-1 bg-dark">Tanggal</td>					
+					</tr>
+					<tr>
+						<td align="center" class="border-1"><?= $nomor ?></td>
+						<td>&nbsp;</td>
+						<td align="center" class="border-1"><?= $tanggal ?></td>												
+					</tr>				
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<div class="line"></div>
+	<div class="left">
+		<table class="table" style="margin-top: 5px;">
+			<tbody>
+				<tr>
+					<td align="center" class="border-1 bg-dark" width="50%">Gudang :</td>
+					<td>&nbsp;</td>
+					<td align="center" class="border-1 bg-dark" width="50%">Kontak :</td>
+				</tr>
+				<tr>
+					<td align="center" class="border-1 px-1 py-1"><?= $gudang ?></td>
+					<td>&nbsp;</td>
+					<td align="center" class="border-1 px-1 py-1"><?= $kontak ?></td>
+				</tr>				
+			</tbody>
+		</table>										
+	</div>		
+</div>
+<div class="content-report">
+	<table class="table table-border">
+		<thead>
+			<tr class="bg-dark">
+				<th align="center" width="7%">No</th>				
+				<th align="center" width="13%">Kode</th>				
+				<th align="center">Nama Barang</th>
+				<th align="center" width="10%">Opname</th>
+				<th align="center" width="10%">Stok</th>
+				<th align="center" width="10%">Selisih</th>								
+				<th align="center" width="10%">Satuan</th>
+				<th align="center" width="20%">Catatan</th>
+			</tr>
+		</thead>
+		<tbody>
+			<?
+				$i = 1;
+				$qty = 0;
+				$selisih = 0;
+			    foreach ($detil->data as $row) {
+			?>
+				<tr>
+					<td align="center" class="py-1"><?= $i ?></td>	
+					<td class="left py-1"><?= $row->noitem ?></td>	
+					<td class="left py-1"><?= $row->item ?></td>
+					<td class="right px-1 py-1"><?= $row->qty ?></td>
+					<td class="right px-1 py-1"><?= $row->qty - $row->selisih ?></td>
+					<td class="right px-1 py-1"><?= $row->selisih ?></td>										
+					<td class="right px-1 py-1"><?= $row->satuan ?></td>
+					<td class="left px-1 py-1"><?= $row->catatan ?></td>
+				</tr>
+			<?
+				$i++;
+				$qty += $row->qty;
+				$selisih += $row->selisih;				
+				}
+			?>
+		</tbody>
+		<tfoot>
+			<tr>
+				<td colspan="5" class="left py-1"></td>
+				<th colspan="2" class="right px-1 py-1">Jumlah Item</th>
+				<th class="right px-1 py-1"><?= $i-1 ?></th>				
+			</tr>						
+			<tr>
+				<td colspan="5" class="left py-1"></td>
+				<th colspan="2" class="right px-1 py-1">Total Qty Opname</th>
+				<th class="right px-1 py-1"><?= $qty ?></th>				
+			</tr>							
+			<tr>
+				<td colspan="5" class="left py-1"></td>
+				<th colspan="2" class="right px-1 py-1">Total Selisih</th>
+				<th class="right px-1 py-1"><?= $selisih ?></th>				
+			</tr>													
+		</tfoot>
+	</table>	
+	<table class="table" style="margin-top: 20px; width: 20%">
+		<tbody>
+			<tr>
+				<td>Menyetujui :</td>
+			</tr>
+			<tr>
+				<td align="center" class="py-4 border-bottom-1"></td>
+			</tr>
+		</tbody>
+	</table>							
+</div>

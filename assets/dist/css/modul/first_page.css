@@ -1,0 +1,54 @@
+.content-header {
+	min-height: 1px;
+	background-color:#fff;
+	margin-bottom: 15px;
+	margin-top: -1px;	
+}
+.content-header p {
+	font-size: 12px;
+	margin-top: 0px;
+	line-height: 1.35em;
+	height: 15px;
+}
+
+.top{
+  display: none;
+}  
+table.dataTable{
+  padding-top: 5px;
+}
+table.dataTable thead{
+  position:sticky;
+}  
+table.dataTable thead tr th{  
+  background-color: #f8f9fa;    
+}
+table.dataTable thead th[data-is-resizable=true] {
+  border-left: 1px solid transparent;
+  border-right: 1px solid #ced4da;
+}  
+table.dataTable thead th.dt-colresizable-hover {
+  cursor: col-resize;
+  background-color: #eaeaea;
+  border-left: 1px solid transparent;
+ }
+table.dataTable thead th.dt-colresizable-bound-min, 
+table.dataTable thead th.dt-colresizable-bound-max {
+  opacity: 0.2;
+  cursor: not-allowed !important;
+}  
+div.dataTables_wrapper div.dataTables_paginate {
+  padding-left: 12px;
+  text-align: right;
+}  
+.table-striped > tbody td{
+  font-size: 14px;
+  max-width: 200px;
+  min-width: 5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.table-striped > tbody tr td:first-child {
+  display: none;
+}  
